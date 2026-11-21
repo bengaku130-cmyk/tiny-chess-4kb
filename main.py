@@ -1,118 +1,127 @@
-S={'P':"KKKKUUUUMMOQLLMPKKKOLJIKLMMGKKKK",
-'N':"ACEECGKKEKMNELNOEKMNELLMCGKLACEE",
-'B':"GIIIIKKKIKLMILLMIKMMIMMMILKKGIII",
-'R':"KKKKLMMM"+"JKKK"*5+"KKKL",
-'Q':"GIIJIKKKIKLLJKLLKKLLILLLIKLKGIIJ",
-'K':"ECCAECCAECCAECCAGEECIGGGOOKKOQMK"}
-V={'P':100,'N':300,'B':320,'R':500,'Q':950,'K':20000}
-T={p:tuple(V[p]+5*(ord(s[(i//8)*4+min(i%8,7-i%8)])-75)for i in range(64))for p,s in S.items()}
-F=str.maketrans('PNBRQKpnbrqk','pnbrqkPNBRQK')
-D={'N':(-21,-19,-12,-8,8,12,19,21),'B':(-11,-9,9,11),'R':(-10,-1,1,10)}
-D['Q']=D['K']=D['B']+D['R']
-def X(i):return (i//10-2)*8+i%10-1
-def G(b,C,E,co=0):
- m=[]
- for i in range(120):
-  p=b[i]
-  if not p.isupper(): continue
-  if p=='P':
-   if not co and b[i-10]=='.':
-    m.append((i,i-10,'Q' if i<39 else None))
-    if i>80 and b[i-20]=='.':m.append((i,i-20,None))
-   for d in(-9,-11):
+import sys
+V={'P':100,'N':310,'B':330,'R':500,'Q':950,'K':20000,'.':0}
+W="FFFFsvxxUX[bJLQXFHNTGHIKFFD<FFFF(7<<7AFH>HNPAHPRAHNP>HKL7AFF-:<>>DDDDFFFDHJKDJJLDJKLEKJJDLGG>DAAHHKKPRRRFFHHDFFFAFFFAFFF>DFHDFHKADDFDFFFDFHHDFHHDFHHDHHHAFHF>ADF((((--*(20-*420-7420><74KHA<PUKA"
+P={}
+for n,x in enumerate('PNBRQK'):
+ P[x]=[0]*120
+ for i in range(64):r,f=divmod(i,8);P[x][21+r*10+f]=V[x]+2*ord(W[n*32+r*4+min(f,7-f)])-140
+A=(-10,-1,1,10,-11,-9,9,11)
+D={'P':(-10,-20,-11,-9),'N':(-21,-19,-12,-8,8,12,19,21),'B':A[4:],'R':A[:4],'Q':A,'K':A}
+M=30000
+def G(p,q=0):
+ B,s,c,e,k=p
+ for i,x in enumerate(B):
+  if x.isupper():
+   for d in D[x]:
     j=i+d
-    if b[j].islower()or j==E:m.append((i,j,'Q' if j<29 else None))
-  elif p in D:
-   for d in D[p]:
-    j=i
     while 1:
-     j+=d; c=b[j]
-     if c==' 'or c.isupper():break
-     if c!='.'or not co:m.append((i,j,None))
-     if c.islower()or p in'NK':break
-  if p=='K'and not co:
-   for t2,r2,e2 in((97,98,(96,97)),(93,91,(92,93,94)),(92,91,(93,92)),(96,98,(95,96,97))):
-    if abs(t2-i)==2 and r2 in C and all(b[x]=='.'for x in e2):m.append((i,t2,None))
- return m
-def M(P,m):
- b,s,C,E=P; i,j,pr=m; p=b[i]; c=b[j]
- d=T[pr or p][X(j)]-T[p][X(i)]
- if c!='.': d+=T[c.upper()][63-X(j)]
- n=b[:i]+'.'+b[i+1:]
- if p=='P'and j==E and c=='.':
-  d+=T['P'][63-X(j+10)]; n=n[:j+10]+'.'+n[j+11:]
- n=n[:j]+(pr or p)+n[j+1:]
- if p=='K' and abs(j-i)==2:
-  f=98 if j>94 else 91;t=(i+j)//2
-  d+=T['R'][X(t)]-T['R'][X(f)]; n=n[:f]+'.'+n[f+1:]; n=n[:t]+'R'+n[t+1:]
- N=set(C)-{i,j}
- if p=='K':N-={91,98}
- e=i-10 if p=='P' and j==i-20 else 0
- return(n[::-1].translate(F),-(s+d),{119-x for x in N},119-e if e else 0)
-ND=0; BG=40000
-def Sr(P,dp,a,be):
- global ND; ND+=1; b=P[0]; co=dp<=0
- if co:
-  if P[1]>a:a=P[1]
-  if a>=be:return a
- bs=a if co else-20000
- for m in sorted(G(b,P[2],P[3],co),key=lambda m:-(V[b[m[1]].upper()]if b[m[1]]!='.'else 0)):
-  v=19990 if b[m[1]]=='k'else-Sr(M(P,m),dp-1,-be,-a)
-  if v>bs:bs=v
-  if v>a:a=v
-  if a>=be or ND>BG:break
- return bs
-def A(Q):return any(Q[0][x[1]]=='k'for x in G(Q[0],Q[2],Q[3],1))
-def FL(P):return(P[0][::-1].translate(F),0,P[2],0)
-def RT(P):
- global ND
- ms=[]
- for m in G(P[0],P[2],P[3]):
-  if A(M(P,m))or(P[0][m[0]]=='K'and abs(m[1]-m[0])==2 and(A(FL(P))or A(M(P,(m[0],(m[0]+m[1])//2,None))))):continue
-  ms.append(m)
- bm=None;dp=1
- while dp<=6:
-  ND=0;a=-20000;cb=None
-  for m in ms:
-   v=19990 if P[0][m[1]]=='k'else-Sr(M(P,m),dp-1,-20000,20000)
-   if v>a:a=v;cb=m
-  if cb and(ND<=BG or bm is None):bm=cb
-  if ND>BG:break
-  dp+=1
+     y=B[j]
+     if y.isspace():break
+     if y.isupper():
+      if x=='R'and y=='K'and(i,d)in((91,1),(98,-1))and c[i>91]and not q:yield j,j-2*d
+      break
+     if x=='P':
+      if d in(-10,-20)and y!='.':break
+      if d==-20 and(i<81 or B[i-10]!='.'):break
+      if d in(-11,-9)and y=='.'and j!=e and j not in k:break
+     if y!='.'or not q or j in k or x=='P'and(j==e or j<30):yield i,j
+     if x in'PNK'or y!='.':break
+     j+=d
+def E(p,m,r='Q'):
+ B,s,c,e,k=p;i,j=m;x=B[i];y=B[j]
+ v=P[x][j]-P[x][i]
+ if y!='.':v+=P[y.upper()][119-j]
+ if x=='K'and abs(j-i)==2:v+=P['R'][(i+j)//2]-P['R'][91 if j<i else 98]
+ if x=='P':
+  if j<30:v+=P[r][j]-P['P'][j]
+  if j==e:v+=P['P'][109-j]
+ return v
+def Z(p,m,r='Q'):
+ B,s,c,e,k=p;i,j=m;x=B[i];v=E(p,m,r)
+ b=list(B);b[j]=x;b[i]='.';n=0;o=()
+ c=[c[t]and(91,98,21,28)[t]not in m for t in range(4)]
+ if x=='K':
+  c[0]=c[1]=0
+  if abs(j-i)==2:o=(i,(i+j)//2);b[o[1]]='R';b[91 if j<i else 98]='.'
+ if x=='P':
+  if j<30:b[j]=r
+  if j-i==-20:n=i-10
+  if j==e:b[j+10]='.'
+ return(''.join(b)[::-1].swapcase(),-s-v,tuple(c[::-1]),119-n,tuple(119-t for t in o))
+def O(p):B,s,c,e,k=p;return B[::-1].swapcase(),-s,c[::-1],0,()
+def X(p):
+ B,s,c,e,k=p
+ return any(B[j]=='k'or j in k and(B[i]!='P'or(j-i)%10)for i,j in G(p,1))
+def S(p,d,a,b):
+ global N
+ N+=1
+ if N>L:raise KeyError
+ B,s,c,e,k=p;f=-M;d=max(d,0);o=a
+ if d<1:
+  if s>=b:return s
+  a=max(a,s);f=s
+ u,v=Y.get((p,d),(-M,M))
+ if u>=b:return u
+ if v<=a:return v
+ if d>2:
+  t=-S(O(p),d-3,-b,1-b)
+  if t>=b:return t
+ h=T.get(p)
+ for n,m in enumerate(sorted(G(p,d<1),key=lambda m:(m!=h,-(V[B[m[1]].upper()]*20-V[B[m[0]]]if B[m[1]]!='.'else E(p,m)-M)))):
+  i,j=m
+  if B[j]=='k'or j in k and(B[i]!='P'or(j-i)%10):return M
+  q=Z(p,m);r=d>2 and n>3 and B[j]=='.'
+  t=-S(q,d-1-r,-b,-max(a,f))
+  if r and t>max(a,f):t=-S(q,d-1,-b,-max(a,f))
+  if t>f:
+   f=t;T[p]=m
+   if f>=b:break
+ if f==-M and d>0:f=(1-M)*X(O(p))
+ f=f-(f>M/2)+(f<-M/2);Y[p,d]=(f if f>o else-M,f if f<b else M)
+ return f
+def R(p,n,z):
+ global N,L,T,Y
+ T={};Y={};N=0;L=1e9
+ ms=[m for m in G(p)if not X(Z(p,m))];bm=ms[0]if ms else None
+ for d in range(1,z+1):
+  try:
+   a=-M-1
+   for m in ms:
+    t=-S(Z(p,m),d-1,-M,-a)
+    if t>a:a=t;g=m
+   bm=g;ms.remove(g);ms.insert(0,g)
+  except KeyError:break
+  L=n
+  if N>=n:break
  return bm
-def PF(fen):
- f=fen.split()
- b=' '*20+''.join(' '+''.join('.'*int(c) if c.isdigit() else c for c in r)+' ' for r in f[0].split('/'))+' '*20
- C={q for c,q in(('K',98),('Q',91),('k',28),('q',21))if c in f[2]}
- E=(10-int(f[3][1]))*10+ord(f[3][0])-96 if f[3]!='-' else 0
- rt=f[1]=='b'
- if rt:b=b[::-1].translate(F); C={119-x for x in C}; E=119-E if E else 0
- s=sum(T[c][X(i)]if c.isupper()else-T[c.upper()][63-X(i)] for i,c in enumerate(b) if c.isalpha())
- return(b,s,C,E),rt
-ST='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -'
-P,rt=PF(ST)
-for l in open(0):
- t=l.split()
- c=t[0]
- if c=='uci':print('uciok',flush=1)
- elif c=='isready':print('readyok',flush=1)
- elif c=='quit':break
- elif c=='position':
-  if t[1]=='startpos':P,rt=PF(ST); mv=t[3:]
-  else:
-   k=t.index('moves') if 'moves' in t else len(t); P,rt=PF(' '.join(t[2:k])); mv=t[k+1:]
-  for u in mv:
-   i=(10-int(u[1]))*10+ord(u[0])-96; j=(10-int(u[3]))*10+ord(u[2])-96
-   pr=u[4].upper()if len(u)>4 else None
-   if rt:i,j=119-i,119-j
-   for m in G(P[0],P[2],P[3]):
-    if m==(i,j,pr): P=M(P,m); break
-   rt=not rt
- elif c=='go':
-  if'nodes'in t:BG=int(t[t.index('nodes')+1])
-  m=RT(P)
-  if m is None:print('bestmove 0000',flush=1)
-  else:
-   i,j,pr=m
-   if rt:i,j=119-i,119-j
-   print('bestmove '+chr(96+i%10)+str(10-i//10)+chr(96+j%10)+str(10-j//10)+(pr.lower() if pr else ''),flush=1)
+Q=lambda t:ord(t[0])+4-10*int(t[1])
+U=lambda i:chr(i%10+96)+str(10-i//10)
+p=None
+for l in sys.stdin:
+ w=l.split()
+ if not w:continue
+ if w[0]=='uci':print('uciok')
+ elif w[0]=='isready':print('readyok')
+ elif w[0]=='quit':break
+ elif w[0]=='position':
+  F=w[2:8]if w[1]=='fen'else['rnbqkbnr/'+'p'*8+'/8'*4+'/'+'P'*8+'/RNBQKBNR','w','KQkq','-']
+  B=' '*20
+  for r in F[0].split('/'):
+   for x in '12345678':r=r.replace(x,'.'*int(x))
+   B+=' '+r+'\n'
+  B+=' '*20
+  s=sum(P[x][i]if x.isupper()else-P[x.upper()][119-i]for i,x in enumerate(B)if x.isalpha())
+  p=(B,s,tuple(x in F[2]for x in'QKqk'),0,());b=F[1]=='b'
+  e=Q(F[3])if F[3]!='-'else 0
+  p=O(p)[:3]+(119-e,())if b else p[:3]+(e,())
+  if'moves'in w:
+   for u in w[w.index('moves')+1:]:
+    i,j=Q(u[:2]),Q(u[2:4])
+    if b:i,j=119-i,119-j
+    p=Z(p,(i,j),u[4:].upper()or'Q');b=not b
+ elif w[0]=='go':
+  n=int(w[w.index('nodes')+1])if'nodes'in w else 40000
+  z=int(w[w.index('depth')+1])if'depth'in w else 99
+  m=R(p,n,z)
+  i,j=m or(0,0);print('bestmove',U(119-i if b else i)+U(119-j if b else j)+('q'if p[0][i]=='P'and j<30 else'')if m else'0000')
+ sys.stdout.flush()
